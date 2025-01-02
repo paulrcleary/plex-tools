@@ -1,6 +1,6 @@
 import http.client
-import xmltodict
 import datetime
+import json
 
 plex_token = "redacted"
 plex_url = "redacted"
@@ -21,58 +21,61 @@ completed_list = {
 }
 
 def getLib():
+    headers = {
+        "Accept": "application/json"
+    }
     api_url = http.client.HTTPSConnection(f"{plex_url}")
-    api_url.request("GET", f"/library/sections/1/all?X-Plex-Token={plex_token}")
+    api_url.request("GET", f"/library/sections/1/all?X-Plex-Token={plex_token}", headers=headers)
     lib_data = api_url.getresponse().read()
-    lib_data_dict = xmltodict.parse(lib_data)
+    lib_data_dict = json.loads(lib_data)
 
     my_clever_var = {}
 
     total_duration = 0
     watched_duration = 0
 
-    for series in lib_data_dict['MediaContainer']['Directory']:
-        if "Star Trek" in series['@title']:
-            my_clever_var[series['@title']] = {}
-            # print("\n" + series['@title'] + ":")
+    for series in lib_data_dict['MediaContainer']['Metadata']:
+        if "Star Trek" in series['title']:
+            my_clever_var[series['title']] = {}
+            # print("\n" + series['title'] + ":")
             show_duration = 0
-            showID = series['@ratingKey']
-            api_url.request("GET", f"/library/metadata/{showID}/children?X-Plex-Token={plex_token}")
+            showID = series['ratingKey']
+            api_url.request("GET", f"/library/metadata/{showID}/children?X-Plex-Token={plex_token}", headers=headers)
             show_data = api_url.getresponse().read()
-            show_data_dict = xmltodict.parse(show_data)
-            if int(series["@childCount"]) > 1:
-                for season in show_data_dict['MediaContainer']['Directory']:
-                    if "Season" in (season["@title"] or ["@title"]):
+            show_data_dict = json.loads(show_data)
+            if int(series["childCount"]) > 1:
+                for season in show_data_dict['MediaContainer']['Metadata']:
+                    if "Season" in (season["title"] or ["title"]):
                         season_duration = 0
-                        seasonID = season['@ratingKey']
-                        api_url.request("GET", f"/library/metadata/{seasonID}/children?X-Plex-Token={plex_token}")
+                        seasonID = season['ratingKey']
+                        api_url.request("GET", f"/library/metadata/{seasonID}/children?X-Plex-Token={plex_token}", headers=headers)
                         season_data = api_url.getresponse().read()
-                        season_data_dict = xmltodict.parse(season_data)
-                        for eppisode in season_data_dict["MediaContainer"]["Video"]:
-                            if series['@title'] in completed_list:
-                                if int(str(season['@title']).replace('Season ', '')) in completed_list[series['@title']]:
-                                    watched_duration = watched_duration + int(eppisode['@duration'])
-                            total_duration = total_duration + int(eppisode['@duration'])
-                            show_duration = show_duration + int(eppisode['@duration'])
-                            season_duration = season_duration + int(eppisode['@duration'])
-                        my_clever_var[series['@title']][season["@title"]] = str(datetime.timedelta(milliseconds = season_duration))
-                        # print("\t" + season["@title"] + ": " + str(datetime.timedelta(milliseconds = season_duration)))
+                        season_data_dict = json.loads(season_data)
+                        for eppisode in season_data_dict["MediaContainer"]["Metadata"]:
+                            if series['title'] in completed_list:
+                                if int(str(season['title']).replace('Season ', '')) in completed_list[series['title']]:
+                                    watched_duration = watched_duration + int(eppisode['duration'])
+                            total_duration = total_duration + int(eppisode['duration'])
+                            show_duration = show_duration + int(eppisode['duration'])
+                            season_duration = season_duration + int(eppisode['duration'])
+                        my_clever_var[series['title']][season["title"]] = str(datetime.timedelta(milliseconds = season_duration))
+                        # print("\t" + season["title"] + ": " + str(datetime.timedelta(milliseconds = season_duration)))
             else:
                 season_duration = 0
-                seasonID = show_data_dict['MediaContainer']['Directory']['@ratingKey']
-                api_url.request("GET", f"/library/metadata/{seasonID}/children?X-Plex-Token={plex_token}")
+                seasonID = show_data_dict['MediaContainer']['Metadata'][0]['ratingKey']
+                api_url.request("GET", f"/library/metadata/{seasonID}/children?X-Plex-Token={plex_token}", headers=headers)
                 season_data = api_url.getresponse().read()
-                season_data_dict = xmltodict.parse(season_data)
-                for eppisode in season_data_dict["MediaContainer"]["Video"]:
-                    if series['@title'] in completed_list:
-                        if str(series['@title'])in completed_list:
-                            watched_duration = watched_duration + int(eppisode['@duration'])
-                    total_duration = total_duration + int(eppisode['@duration'])
-                    show_duration = show_duration + int(eppisode['@duration'])
-                    season_duration = season_duration + int(eppisode['@duration'])
+                season_data_dict = json.loads(season_data)
+                for eppisode in season_data_dict["MediaContainer"]["Metadata"]:
+                    if series['title'] in completed_list:
+                        if str(series['title'])in completed_list:
+                            watched_duration = watched_duration + int(eppisode['duration'])
+                    total_duration = total_duration + int(eppisode['duration'])
+                    show_duration = show_duration + int(eppisode['duration'])
+                    season_duration = season_duration + int(eppisode['duration'])
                 # print("\tSeason 1: " + str(datetime.timedelta(milliseconds = show_duration)))
-                my_clever_var[series['@title']]['Season 1'] = str(datetime.timedelta(milliseconds = season_duration))
-            my_clever_var[series['@title']]['total'] = str(datetime.timedelta(milliseconds = show_duration))
+                my_clever_var[series['title']]['Season 1'] = str(datetime.timedelta(milliseconds = season_duration))
+            my_clever_var[series['title']]['total'] = str(datetime.timedelta(milliseconds = show_duration))
     my_clever_var['total'] = str(datetime.timedelta(milliseconds = total_duration))
     my_clever_var['watched'] = str(datetime.timedelta(milliseconds = watched_duration))
     my_clever_var['percent'] = str(round(((watched_duration/total_duration)*100), 3)) + "%"
