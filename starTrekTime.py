@@ -1,7 +1,6 @@
-import os
 import datetime
-import http.client
-import json
+
+from src import plex
 
 #list of the star trek series i have finished watching
 # completed_list = []
@@ -18,26 +17,19 @@ completed_list = {
     "Star Trek: Strange New Worlds":[1,2] 
 }
 
-def plex_request(endpoint):
-    request = http.client.HTTPSConnection(os.environ["PLEX_URL"])
-    request.request("GET", f"{endpoint}?X-Plex-Token={os.environ['PLEX_TOKEN']}", headers={"Accept": "application/json"})
-    plex_data = json.loads(request.getresponse().read())
-    return plex_data
-
-
 def getLib():
     star_trek = {'total': 0, 'watched': 0,'percent': 0 }
-    lib_data = plex_request('/library/sections/1/all')
+    lib_data = plex.request('/library/sections/1/all')
     for series in lib_data['MediaContainer']['Metadata']:
         if "Star Trek" in series['title']:
             star_trek[series['title']] = {}
             show_duration = 0
-            show_data = plex_request(f"/library/metadata/{series['ratingKey']}/children")
+            show_data = plex.request(f"/library/metadata/{series['ratingKey']}/children")
             if int(series["childCount"]) > 1:
                 for season in show_data['MediaContainer']['Metadata']:
                     if "Season" in (season["title"] or ["title"]):
                         season_duration = 0
-                        season_data = plex_request(f"/library/metadata/{season['ratingKey']}/children")
+                        season_data = plex.request(f"/library/metadata/{season['ratingKey']}/children")
                         for eppisode in season_data["MediaContainer"]["Metadata"]:
                             if series['title'] in completed_list:
                                 if int(str(season['title']).replace('Season ', '')) in completed_list[series['title']]:
@@ -48,7 +40,7 @@ def getLib():
                         star_trek[series['title']][season["title"]] = str(datetime.timedelta(milliseconds = season_duration))
             else:
                 season_duration = 0
-                season_data = plex_request(f"/library/metadata/{show_data['MediaContainer']['Metadata'][0]['ratingKey']}/children")
+                season_data = plex.request(f"/library/metadata/{show_data['MediaContainer']['Metadata'][0]['ratingKey']}/children")
                 for eppisode in season_data["MediaContainer"]["Metadata"]:
                     if series['title'] in completed_list:
                         if str(series['title'])in completed_list:
