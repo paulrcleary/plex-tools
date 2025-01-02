@@ -1,9 +1,11 @@
-import http.client
+import os
 import datetime
+import http.client
 import json
 
-plex_token = "redacted"
-plex_url = "redacted"
+plex_token = os.environ["PLEX_TOKEN"]
+plex_url = os.environ["PLEX_URL"]
+
 
 #list of the star trek series i have finished watching
 # completed_list = []
