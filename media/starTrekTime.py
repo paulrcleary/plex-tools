@@ -29,14 +29,11 @@ def getLib():
     lib_data = api_url.getresponse().read()
     lib_data_dict = json.loads(lib_data)
 
-    my_clever_var = {}
-
-    total_duration = 0
-    watched_duration = 0
+    star_trek_dict = {'total': 0, 'watched': 0,'percent': 0 }
 
     for series in lib_data_dict['MediaContainer']['Metadata']:
         if "Star Trek" in series['title']:
-            my_clever_var[series['title']] = {}
+            star_trek_dict[series['title']] = {}
             # print("\n" + series['title'] + ":")
             show_duration = 0
             showID = series['ratingKey']
@@ -54,11 +51,11 @@ def getLib():
                         for eppisode in season_data_dict["MediaContainer"]["Metadata"]:
                             if series['title'] in completed_list:
                                 if int(str(season['title']).replace('Season ', '')) in completed_list[series['title']]:
-                                    watched_duration = watched_duration + int(eppisode['duration'])
-                            total_duration = total_duration + int(eppisode['duration'])
+                                    star_trek_dict['watched'] = star_trek_dict['watched'] + int(eppisode['duration'])
+                            star_trek_dict['total'] = star_trek_dict['total'] + int(eppisode['duration'])
                             show_duration = show_duration + int(eppisode['duration'])
                             season_duration = season_duration + int(eppisode['duration'])
-                        my_clever_var[series['title']][season["title"]] = str(datetime.timedelta(milliseconds = season_duration))
+                        star_trek_dict[series['title']][season["title"]] = str(datetime.timedelta(milliseconds = season_duration))
                         # print("\t" + season["title"] + ": " + str(datetime.timedelta(milliseconds = season_duration)))
             else:
                 season_duration = 0
@@ -69,36 +66,28 @@ def getLib():
                 for eppisode in season_data_dict["MediaContainer"]["Metadata"]:
                     if series['title'] in completed_list:
                         if str(series['title'])in completed_list:
-                            watched_duration = watched_duration + int(eppisode['duration'])
-                    total_duration = total_duration + int(eppisode['duration'])
+                            star_trek_dict['watched'] = star_trek_dict['watched'] + int(eppisode['duration'])
+                    star_trek_dict['total'] = star_trek_dict['total'] + int(eppisode['duration'])
                     show_duration = show_duration + int(eppisode['duration'])
                     season_duration = season_duration + int(eppisode['duration'])
                 # print("\tSeason 1: " + str(datetime.timedelta(milliseconds = show_duration)))
-                my_clever_var[series['title']]['Season 1'] = str(datetime.timedelta(milliseconds = season_duration))
-            my_clever_var[series['title']]['total'] = str(datetime.timedelta(milliseconds = show_duration))
-    my_clever_var['total'] = str(datetime.timedelta(milliseconds = total_duration))
-    my_clever_var['watched'] = str(datetime.timedelta(milliseconds = watched_duration))
-    my_clever_var['percent'] = str(round(((watched_duration/total_duration)*100), 3)) + "%"
+                star_trek_dict[series['title']]['Season 1'] = str(datetime.timedelta(milliseconds = season_duration))
+            star_trek_dict[series['title']]['total'] = str(datetime.timedelta(milliseconds = show_duration))
+    star_trek_dict['percent'] = str(round(((star_trek_dict['watched']/star_trek_dict['total'])*100), 3)) + "%"
+    star_trek_dict['total'] = str(datetime.timedelta(milliseconds = star_trek_dict['total']))
+    star_trek_dict['watched'] = str(datetime.timedelta(milliseconds = star_trek_dict['watched']))
 
 
-
-
-            # print("\nSeries Total: ",str(datetime.timedelta(milliseconds = show_duration)) + "\n---------------------------------------- \n")
-    # print("Total: " + str(datetime.timedelta(milliseconds = total_duration)))
-    # print("Watched: " + str(datetime.timedelta(milliseconds = watched_duration)))
-    # print(str(round(((watched_duration/total_duration)*100), 3)) + "%")
-
-
-    for show in my_clever_var:
+    for show in star_trek_dict:
         
         if show != 'total' and show != 'watched' and show != 'percent':
             print(show + ":")
-            for s in my_clever_var[show]:
-                print(f"\t{s}: {my_clever_var[show][s]}")
-            print(f"Series Total: {my_clever_var[show]['total']}\n---------------------------------------- \n")
-    print(f"Total: {my_clever_var['total']}\n")
-    print(f"Watched: {my_clever_var['watched']}\n")
-    print(f"Percent: {my_clever_var['percent']}\n")
+            for s in star_trek_dict[show]:
+                print(f"\t{s}: {star_trek_dict[show][s]}")
+            print(f"Series Total: {star_trek_dict[show]['total']}\n---------------------------------------- \n")
+    print(f"Total: {star_trek_dict['total']}\n")
+    print(f"Watched: {star_trek_dict['watched']}\n")
+    print(f"Percent: {star_trek_dict['percent']}\n")
 
     
 
