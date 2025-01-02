@@ -26,51 +26,51 @@ def plex_request(endpoint):
 
 
 def getLib():
-    star_trek_dict = {'total': 0, 'watched': 0,'percent': 0 }
-    lib_data_dict = plex_request('/library/sections/1/all')
-    for series in lib_data_dict['MediaContainer']['Metadata']:
+    star_trek = {'total': 0, 'watched': 0,'percent': 0 }
+    lib_data = plex_request('/library/sections/1/all')
+    for series in lib_data['MediaContainer']['Metadata']:
         if "Star Trek" in series['title']:
-            star_trek_dict[series['title']] = {}
+            star_trek[series['title']] = {}
             show_duration = 0
-            show_data_dict = plex_request(f"/library/metadata/{series['ratingKey']}/children")
+            show_data = plex_request(f"/library/metadata/{series['ratingKey']}/children")
             if int(series["childCount"]) > 1:
-                for season in show_data_dict['MediaContainer']['Metadata']:
+                for season in show_data['MediaContainer']['Metadata']:
                     if "Season" in (season["title"] or ["title"]):
                         season_duration = 0
-                        season_data_dict = plex_request(f"/library/metadata/{season['ratingKey']}/children")
-                        for eppisode in season_data_dict["MediaContainer"]["Metadata"]:
+                        season_data = plex_request(f"/library/metadata/{season['ratingKey']}/children")
+                        for eppisode in season_data["MediaContainer"]["Metadata"]:
                             if series['title'] in completed_list:
                                 if int(str(season['title']).replace('Season ', '')) in completed_list[series['title']]:
-                                    star_trek_dict['watched'] = star_trek_dict['watched'] + int(eppisode['duration'])
-                            star_trek_dict['total'] = star_trek_dict['total'] + int(eppisode['duration'])
+                                    star_trek['watched'] = star_trek['watched'] + int(eppisode['duration'])
+                            star_trek['total'] = star_trek['total'] + int(eppisode['duration'])
                             show_duration = show_duration + int(eppisode['duration'])
                             season_duration = season_duration + int(eppisode['duration'])
-                        star_trek_dict[series['title']][season["title"]] = str(datetime.timedelta(milliseconds = season_duration))
+                        star_trek[series['title']][season["title"]] = str(datetime.timedelta(milliseconds = season_duration))
             else:
                 season_duration = 0
-                season_data_dict = plex_request(f"/library/metadata/{show_data_dict['MediaContainer']['Metadata'][0]['ratingKey']}/children")
-                for eppisode in season_data_dict["MediaContainer"]["Metadata"]:
+                season_data = plex_request(f"/library/metadata/{show_data['MediaContainer']['Metadata'][0]['ratingKey']}/children")
+                for eppisode in season_data["MediaContainer"]["Metadata"]:
                     if series['title'] in completed_list:
                         if str(series['title'])in completed_list:
-                            star_trek_dict['watched'] = star_trek_dict['watched'] + int(eppisode['duration'])
-                    star_trek_dict['total'] = star_trek_dict['total'] + int(eppisode['duration'])
+                            star_trek['watched'] = star_trek['watched'] + int(eppisode['duration'])
+                    star_trek['total'] = star_trek['total'] + int(eppisode['duration'])
                     show_duration = show_duration + int(eppisode['duration'])
                     season_duration = season_duration + int(eppisode['duration'])
-                star_trek_dict[series['title']]['Season 1'] = str(datetime.timedelta(milliseconds = season_duration))
-            star_trek_dict[series['title']]['total'] = str(datetime.timedelta(milliseconds = show_duration))
-    star_trek_dict['percent'] = str(round(((star_trek_dict['watched']/star_trek_dict['total'])*100), 3)) + "%"
-    star_trek_dict['total'] = str(datetime.timedelta(milliseconds = star_trek_dict['total']))
-    star_trek_dict['watched'] = str(datetime.timedelta(milliseconds = star_trek_dict['watched']))
+                star_trek[series['title']]['Season 1'] = str(datetime.timedelta(milliseconds = season_duration))
+            star_trek[series['title']]['total'] = str(datetime.timedelta(milliseconds = show_duration))
+    star_trek['percent'] = str(round(((star_trek['watched']/star_trek['total'])*100), 3)) + "%"
+    star_trek['total'] = str(datetime.timedelta(milliseconds = star_trek['total']))
+    star_trek['watched'] = str(datetime.timedelta(milliseconds = star_trek['watched']))
 
-    for show in star_trek_dict:
+    for show in star_trek:
         if show != 'total' and show != 'watched' and show != 'percent':
             print(show + ":")
-            for s in star_trek_dict[show]:
-                print(f"\t{s}: {star_trek_dict[show][s]}")
-            print(f"Series Total: {star_trek_dict[show]['total']}\n---------------------------------------- \n")
-    print(f"Total: {star_trek_dict['total']}\n")
-    print(f"Watched: {star_trek_dict['watched']}\n")
-    print(f"Percent: {star_trek_dict['percent']}\n")
+            for s in star_trek[show]:
+                print(f"\t{s}: {star_trek[show][s]}")
+            print(f"Series Total: {star_trek[show]['total']}\n---------------------------------------- \n")
+    print(f"Total: {star_trek['total']}\n")
+    print(f"Watched: {star_trek['watched']}\n")
+    print(f"Percent: {star_trek['percent']}\n")
 
     
 
